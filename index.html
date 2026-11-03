@@ -3,8 +3,19 @@
 function size(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);g.setTransform(dpr,0,0,dpr,0,0);blue=blue||W/2;pink=pink||W/2;blue=Math.max(48,Math.min(W-48,blue));pink=Math.max(48,Math.min(W-48,pink));if(!running){ball.x=W/2;ball.y=H/2}}addEventListener('resize',size);size();
 const width=()=>Math.min(112,Math.max(67,W*.24)),yTop=()=>Math.max(78,H*.13),yBot=()=>H-Math.max(78,H*.13);function clamp(x){return Math.max(width()/2+5,Math.min(W-width()/2-5,x))}function sound(freq,duration=0.09,type='sine'){try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),v=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(80,freq*.65),audio.currentTime+duration);v.gain.setValueAtTime(.1,audio.currentTime);v.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(v);v.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch(e){}}
 function launch(dir){ball={x:W/2,y:H/2,r:Math.max(7,Math.min(10,W*.022)),vx:(Math.random()-.5)*145,vy:dir*260};running=true;flash='';btn.hidden=true}function reset(){scoreB=0;scoreP=0;over=false;launch(Math.random()<.5?-1:1)}btn.onclick=reset;
-function input(e){e.preventDefault();const y=e.clientY;if(y<H*.5){blue=clamp(e.clientX);pointers.set(e.pointerId,'b')}else{pink=clamp(e.clientX);pointers.set(e.pointerId,'p')}try{c.setPointerCapture(e.pointerId)}catch(_){}}c.addEventListener('pointerdown',input);c.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;e.preventDefault();if(pointers.get(e.pointerId)==='b')blue=clamp(e.clientX);else pink=clamp(e.clientX)});for(const t of ['pointerup','pointercancel'])c.addEventListener(t,e=>pointers.delete(e.pointerId));
-function goal(winner,x){if(winner==='b')scoreB++;else scoreP++;const hit=Math.abs(x-W/2)<W*.23;flash=hit?'OOF!':'WHOOSH!';flashUntil=performance.now()+850;sound(hit?155:480,.22,hit?'sawtooth':'triangle');running=false;if(scoreB>=7||scoreP>=7){over=true;btn.textContent=(scoreB>scoreP?'BLUE':'PINK')+' WINS! PLAY AGAIN';btn.hidden=false}else setTimeout(()=>{if(!over)launch(winner==='b'?1:-1)},900)}
+// Independent touch identifiers: preserve the proven original prototype's two-player scheme.
+ const activeTouches=[null,null];
+ function touchStart(e){e.preventDefault();for(const t of e.changedTouches){const i=t.clientY<H/2?0:1;if(activeTouches[i]===null){activeTouches[i]=t.identifier;if(i===0)blue=clamp(t.clientX);else pink=clamp(t.clientX)}}}
+ function touchMove(e){e.preventDefault();for(const t of e.changedTouches){if(activeTouches[0]===t.identifier)blue=clamp(t.clientX);if(activeTouches[1]===t.identifier)pink=clamp(t.clientX)}}
+ function touchEnd(e){e.preventDefault();for(const t of e.changedTouches){for(let i=0;i<2;i++)if(activeTouches[i]===t.identifier)activeTouches[i]=null}}
+ c.addEventListener('touchstart',touchStart,{passive:false});c.addEventListener('touchmove',touchMove,{passive:false});c.addEventListener('touchend',touchEnd,{passive:false});c.addEventListener('touchcancel',touchEnd,{passive:false});
+ let mouseDown=false,mouseSide=0;
+ c.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;mouseDown=true;mouseSide=e.clientY<H/2?0:1;if(mouseSide===0)blue=clamp(e.clientX);else pink=clamp(e.clientX)});
+ c.addEventListener('pointermove',e=>{if(e.pointerType==='touch'||!mouseDown)return;if(mouseSide===0)blue=clamp(e.clientX);else pink=clamp(e.clientX)});
+ addEventListener('pointerup',e=>{if(e.pointerType!=='touch')mouseDown=false});
+ let lastVoice=0;
+ function sayHit(){try{if(!('speechSynthesis' in window))return;const now=Date.now();if(now-lastVoice<500)return;lastVoice=now;const choices=['Oof!','Ow!','Hey!','My face!'];const word=choices[Math.floor(Math.random()*choices.length)];window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(word);u.lang='en-US';u.rate=1.25;u.pitch=1.22;u.volume=.85;window.speechSynthesis.speak(u)}catch(_){}}
+function goal(winner,x){if(winner==='b')scoreB++;else scoreP++;const hit=Math.abs(x-W/2)<W*.23;flash='';if(hit){sound(155,.18,'sawtooth');sayHit()}else{sound(490,.065,'sine')}running=false;if(scoreB>=7||scoreP>=7){over=true;btn.textContent=(scoreB>scoreP?'BLUE':'PINK')+' WINS! PLAY AGAIN';btn.hidden=false}else setTimeout(()=>{if(!over)launch(winner==='b'?1:-1)},900)}
 function update(dt){if(!running)return;const prevY=ball.y;ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;if(ball.x<ball.r){ball.x=ball.r;ball.vx=Math.abs(ball.vx);sound(380,.04)}if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);sound(380,.04)}const pw=width();for(const p of [{x:blue,y:yTop(),top:true},{x:pink,y:yBot(),top:false}]){const edge=p.top?p.y+9:p.y-9;if(p.top&&ball.vy<0&&prevY-ball.r>=edge&&ball.y-ball.r<=edge||!p.top&&ball.vy>0&&prevY+ball.r<=edge&&ball.y+ball.r>=edge){if(Math.abs(ball.x-p.x)<=pw/2+ball.r){ball.y=edge+(p.top?ball.r:-ball.r);const off=(ball.x-p.x)/(pw/2);ball.vx=Math.max(-350,Math.min(350,ball.vx*.35+off*235));ball.vy=(p.top?1:-1)*Math.min(570,Math.abs(ball.vy)*1.055+8);sound(570,.07,'square')}}}if(ball.y<-ball.r)goal('p',ball.x);if(ball.y>H+ball.r)goal('b',ball.x)}
 function rect(x,y,w,h,color,r=0){g.fillStyle=color;g.beginPath();g.roundRect(x,y,w,h,r);g.fill()}function line(x1,y1,x2,y2,color,lw=1){g.strokeStyle=color;g.lineWidth=lw;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke()}
 function star(x,y,r,col){g.save();g.translate(x,y);g.fillStyle=col;g.beginPath();for(let k=0;k<10;k++){const a=k*Math.PI/5-Math.PI/2,rr=k%2?r*.47:r;g.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}g.closePath();g.fill();g.restore()}
@@ -22,7 +33,7 @@ for(const yy of [H*.25,H*.75]){g.strokeStyle='#fce9c433';g.lineWidth=2;g.beginPa
 for(const y of [yTop()-37,yBot()+37]){line(15,y,W-15,y,'#ffe5b177',2)}
 // classroom stickers and pencil doodles kept clear of play
 star(W*.12,H*.28,11,'#ffe2a38a');star(W*.85,H*.73,9,'#f4d2b58c');doodle(W*.14,H*.41,.7,-.22,0);doodle(W*.84,H*.58,.65,.18,1);doodle(W*.86,H*.34,.5,.1,2);
-g.save();g.globalAlpha=.28;g.fillStyle='#593c35';g.textAlign='center';g.font='900 15px system-ui';g.fillText('NO RUNNING!',W/2,H*.39);g.translate(W/2,H*.61);g.rotate(Math.PI);g.fillText('NO RUNNING!',0,0);g.restore();
+// Subtle hand-drawn accents instead of words on the court.
 // tape corners, subtly worn
 for(const [x,y,r] of [[21,H*.49,-.14],[W-21,H*.51,.14]]){g.save();g.translate(x,y);g.rotate(r);rect(-10,-6,20,12,'#f5dfa977',2);line(-7,-3,7,-3,'#fff9d34a');g.restore()}
 }
@@ -48,8 +59,8 @@ function scores(){
 // paper label for each score; blue fully rotated for opposing player
 function label(x,y,score,top){g.save();g.translate(x,y);if(top)g.rotate(Math.PI);g.shadowColor='#4c2a1d66';g.shadowBlur=5;rect(-27,-21,54,43,'#fff3d6',7);g.shadowBlur=0;g.strokeStyle=top?'#387eae':'#c64c88';g.lineWidth=2;g.strokeRect(-25,-19,50,39);g.fillStyle=top?'#246b9e':'#b73e7a';g.textAlign='center';g.font='900 30px system-ui';g.fillText(String(score),0,12);g.restore()}
 label(43,48,scoreB,true);label(W-43,H-48,scoreP,false);
-g.textAlign='center';g.fillStyle='#50342d';g.font='900 13px system-ui';g.fillText('DETENTION',W/2,H/2-27);g.font='900 11px system-ui';g.fillText('DODGEBALL',W/2,H/2-14);
+// Keep the playfield clear of text; only the score labels remain.
 }
-function frame(t){const dt=Math.min((t-last)/1000||0,.033);last=t;update(dt);desk();notebook(blue,yTop(),true);notebook(pink,yBot(),false);drawBall();scores();if(flash&&t<flashUntil){g.save();g.translate(W/2,H/2+34);g.textAlign='center';g.font='900 39px system-ui';g.lineWidth=6;g.strokeStyle='#5e3226';g.strokeText(flash,0,0);g.fillStyle=flash==='OOF!'?'#ffe184':'#fff4df';g.fillText(flash,0,0);g.restore()}requestAnimationFrame(frame)}requestAnimationFrame(frame);
+function frame(t){const dt=Math.min((t-last)/1000||0,.033);last=t;update(dt);desk();notebook(blue,yTop(),true);notebook(pink,yBot(),false);drawBall();scores();requestAnimationFrame(frame)}requestAnimationFrame(frame);
 })();
 </script></body></html>
