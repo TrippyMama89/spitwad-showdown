@@ -40,9 +40,19 @@ star(W*.12,H*.28,11,'#ffe2a38a');star(W*.85,H*.73,9,'#f4d2b58c');doodle(W*.14,H*
 // tape corners, subtly worn
 for(const [x,y,r] of [[21,H*.49,-.14],[W-21,H*.51,.14]]){g.save();g.translate(x,y);g.rotate(r);rect(-10,-6,20,12,'#f5dfa977',2);line(-7,-3,7,-3,'#fff9d34a');g.restore()}
 }
+const blueHandsImage = new Image();
+blueHandsImage.src = 'detention-blue-hands.png';
+const pinkHandsImage = new Image();
+pinkHandsImage.src = 'detention-pink-hands.png';
 function notebook(x,y,top){const w=width(),h=19;g.save();g.translate(x,y);if(top)g.rotate(Math.PI);const blueColor=top?'#347cb4':'#df5b99',light=top?'#6fc3ec':'#ffb3d2',dark=top?'#154c7e':'#9f2d67';
 // Forearms point toward their player's own end; the entire object rotates 180 degrees
-for(const side of [-1,1]){const sx=side*w*.31;g.save();g.translate(sx,0);g.rotate(side*.10);g.shadowColor='#3d241b77';g.shadowBlur=4;rect(-w*.082,9,w*.164,38,dark,5);rect(-w*.077,9,w*.154,34,blueColor,4);line(-w*.06,13,-w*.06,39,light+'99',2);rect(-w*.08,4,w*.16,16,'#b87856',6);rect(-w*.078,2,w*.156,15,'#f2c198',6);rect(-w*.075,-1,w*.15,9,'#eeb88c',4);g.restore()}
+const handsImage = top ? blueHandsImage : pinkHandsImage;
+if (handsImage.complete && handsImage.naturalWidth) {
+  g.save();
+  if (top) g.rotate(Math.PI);
+  g.drawImage(handsImage, -w * 0.75, -w * 0.35, w * 1.5, w * 0.7);
+  g.restore();
+}
 // soft contact shadow under book
 rect(-w/2+1,-h/2+3,w,h,'#43291c88',4);
 // Edge-on book: dark outline, upper colored front cover, paper stack, lower colored back cover
