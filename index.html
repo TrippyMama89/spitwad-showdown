@@ -20,7 +20,10 @@ function update(dt){if(!running)return;const prevY=ball.y;ball.x+=ball.vx*dt;bal
 function rect(x,y,w,h,color,r=0){g.fillStyle=color;g.beginPath();g.roundRect(x,y,w,h,r);g.fill()}function line(x1,y1,x2,y2,color,lw=1){g.strokeStyle=color;g.lineWidth=lw;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke()}
 function star(x,y,r,col){g.save();g.translate(x,y);g.fillStyle=col;g.beginPath();for(let k=0;k<10;k++){const a=k*Math.PI/5-Math.PI/2,rr=k%2?r*.47:r;g.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}g.closePath();g.fill();g.restore()}
 function doodle(x,y,scale,rot,type){g.save();g.translate(x,y);g.rotate(rot);g.scale(scale,scale);g.strokeStyle='#6e483c';g.lineWidth=2;g.lineCap='round';g.lineJoin='round';g.globalAlpha=.52;if(type===0){g.beginPath();g.moveTo(-10,-4);g.lineTo(-3,4);g.lineTo(12,-10);g.stroke();g.beginPath();g.arc(0,0,15,0,Math.PI*2);g.stroke()}if(type===1){g.beginPath();g.moveTo(-12,4);g.quadraticCurveTo(-4,-12,0,2);g.quadraticCurveTo(9,-12,12,4);g.stroke();g.beginPath();g.moveTo(-10,10);g.lineTo(10,10);g.stroke()}if(type===2){g.beginPath();g.moveTo(-12,0);g.lineTo(12,0);g.moveTo(0,-12);g.lineTo(0,12);g.stroke()}g.restore()}
+const deskImage = new Image();
+deskImage.src = 'detention-desk-flipped.jpg';
 function desk(){
+if (deskImage.complete && deskImage.naturalWidth) { g.drawImage(deskImage, 0, 0, W, H); return; }
 const grad=g.createLinearGradient(0,0,W,H);grad.addColorStop(0,'#d9a777');grad.addColorStop(.35,'#c18c5b');grad.addColorStop(.7,'#d5a06d');grad.addColorStop(1,'#b27a50');g.fillStyle=grad;g.fillRect(0,0,W,H);
 // warm wood planks with organic fine-grain strokes
 for(let i=0;i<7;i++){let x=i*W/6+Math.sin(i*5)*8;line(x,0,x+8,H,'#6f462729',2);line(x+3,0,x+11,H,'#fff3cf25',2)}
