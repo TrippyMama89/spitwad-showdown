@@ -50,12 +50,6 @@ const handsImage = top ? blueHandsImage : pinkHandsImage;
 if (handsImage.complete && handsImage.naturalWidth) {
 g.save();
 if (top) g.rotate(Math.PI);
-const sleeveColor = top ? '#2168bd' : '#e94c96';
-const edgeDistance = top ? y : H - y;
-for (const side of [-1, 1]) {
-rect(side * w * 0.61 - w * 0.14, 25,
-       w * 0.28, Math.max(0, edgeDistance - 25), sleeveColor, 5);
-}
 g.drawImage(handsImage, -w * 0.95, -w * 0.5, w * 1.9, w * 1.0);
 g.restore();
 }
