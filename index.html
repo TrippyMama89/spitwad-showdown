@@ -50,6 +50,22 @@ const handsImage = top ? blueHandsImage : pinkHandsImage;
 if (handsImage.complete && handsImage.naturalWidth) {
 g.save();
 if (top) g.rotate(Math.PI);
+ // Extend the existing sweatshirt fabric toward the board edge
+const sleeveY = top ? -w * 0.80 : -w * 0.30;
+const sleeveX = -w * 0.968;
+const sleeveW = w * 1.936;
+const sleeveH = w * 1.10;
+const stripH = sleeveH * 0.10;
+const sourceY = top ? 0 : handsImage.naturalHeight * 0.90;
+const targetY = top ? -y : 0;
+const targetH = top ? y + sleeveY : H - y - (sleeveY + sleeveH);
+if (targetH > 0) {
+  g.drawImage(
+    handsImage,
+    0, sourceY, handsImage.naturalWidth, handsImage.naturalHeight * 0.10,
+    sleeveX, targetY, sleeveW, targetH
+  );
+}
 g.drawImage(handsImage, -w * 0.968, top ? -w * 0.80 : -w * 0.30, w * 1.936, w * 1.10);
 g.restore();
 }
